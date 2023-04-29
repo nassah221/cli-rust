@@ -1,3 +1,8 @@
+use std::{
+    fs,
+    io::{BufRead, BufReader},
+};
+
 use clap::{Arg, ArgAction, Command};
 
 type MyResult<T> = Result<T, Box<dyn std::error::Error>>;
@@ -47,6 +52,38 @@ pub fn get_args() -> MyResult<Config> {
 }
 
 pub fn run(config: Config) -> MyResult<()> {
-    dbg!(config);
+    // dbg!(config);
+    for file in &config.files {
+        match open(file) {
+            Err(e) => eprintln!("Failed to open {}: {}", file, e),
+            Ok(buf) => {
+                let mut last_num = 0;
+                for (line_number, line) in buf.lines().enumerate() {
+                    let line = line?;
+
+                    if config.number_lines {
+                        println!("{:>6}\t{}", line_number + 1, line);
+                    } else if config.number_nonblank_lines {
+                        if !line.is_empty() {
+                            last_num += 1;
+                            println!("{:>6}\t{}", last_num, line);
+                        } else {
+                            println!()
+                        }
+                    } else {
+                        println!("{}", line);
+                    }
+                }
+            }
+        }
+    }
+
     Ok(())
+}
+
+fn open(filename: &str) -> MyResult<Box<dyn BufRead>> {
+    match filename {
+        "-" => Ok(Box::new(BufReader::new(std::io::stdin()))),
+        _ => Ok(Box::new(BufReader::new(fs::File::open(filename)?))),
+    }
 }
