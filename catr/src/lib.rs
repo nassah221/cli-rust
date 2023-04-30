@@ -1,4 +1,5 @@
 use std::{
+    fmt::format,
     fs,
     io::{BufRead, BufReader},
 };
@@ -52,26 +53,31 @@ pub fn get_args() -> MyResult<Config> {
 }
 
 pub fn run(config: Config) -> MyResult<()> {
-    // dbg!(config);
     for file in &config.files {
         match open(file) {
             Err(e) => eprintln!("Failed to open {}: {}", file, e),
             Ok(buf) => {
-                let mut last_num = 0;
-                for (line_number, line) in buf.lines().enumerate() {
-                    let line = line?;
-
-                    if config.number_lines {
-                        println!("{:>6}\t{}", line_number + 1, line);
+                let (mut line_number, mut last_num) = (0, 0);
+                let mut lines = buf.lines().peekable();
+                while let Some(Ok(line)) = lines.next() {
+                    let formatted_line = if config.number_lines {
+                        format!("{:6}\t{}", line_number + 1, line)
                     } else if config.number_nonblank_lines {
                         if !line.is_empty() {
                             last_num += 1;
-                            println!("{:>6}\t{}", last_num, line);
+                            format!("{:6}\t{}", last_num, line)
                         } else {
-                            println!()
+                            format!("")
                         }
                     } else {
-                        println!("{}", line);
+                        format!("{}", line)
+                    };
+                    line_number += 1;
+
+                    if lines.peek().is_none() {
+                        print!("{}{}", formatted_line, "");
+                    } else {
+                        print!("{}{}", formatted_line, "\n");
                     }
                 }
             }
