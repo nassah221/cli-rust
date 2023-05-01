@@ -1,0 +1,12 @@
+==> tests/inputs/one.txt <==
+one
+==> tests/inputs/two.txt <==
+one
+two
+==> tests/inputs/three.txt <==
+one
+two
+
+==> tests/inputs/ten.txt <==
+one
+two
