@@ -53,10 +53,18 @@ pub fn get_args() -> MyResult<Config> {
 }
 
 pub fn run(config: Config) -> MyResult<()> {
-    for filename in &config.files {
-        match open(filename) {
+    let total_files = &config.files.len();
+    for (file_num, filename) in config.files.into_iter().enumerate() {
+        match open(&filename) {
             Err(e) => eprintln!("Failed to open {}: {}", filename, e),
             Ok(mut reader) => {
+                if *total_files > 1 {
+                    println!(
+                        "{}==> {} <==",
+                        if file_num > 0 { "\n" } else { "" },
+                        filename
+                    )
+                }
                 if let Some(num_bytes) = config.bytes {
                     let mut handle = reader.take(num_bytes as u64);
                     let mut buf = vec![0; num_bytes];
